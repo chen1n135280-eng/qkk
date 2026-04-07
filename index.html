@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPA专属备考计划｜精准适配你的作息</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        accounting: '#F53F3F',
+                        tax: '#00B42A',
+                        economic: '#722ED1',
+                    },
+                    fontFamily: {
+                        sans: ['Microsoft YaHei', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .task-complete { text-decoration: line-through; color: #999; }
+            .rest-day { background-color: #FFF7E6; }
+            .commute { background-color: #E8F3FF; }
+            .night { background-color: #F0FFF4; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+<header class="bg-white sticky top-0 shadow p-4">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+        <div class="flex items-center gap-2">
+            <i class="fa fa-graduation-cap text-primary text-xl"></i>
+            <h1 class="text-lg font-bold">CPA144天专属备考计划</h1>
+            <span class="text-xs bg-primary/10 text-primary px-2 rounded">适配通勤+上班作息</span>
+        </div>
+        <div class="flex gap-4 mt-2 md:mt-0">
+            <span class="text-sm">总进度：<span id="totalProgress" class="font-bold text-primary">0%</span></span>
+            <button id="resetBtn" class="text-sm text-red-500">重置打卡</button>
+        </div>
+    </div>
+</header>
+
+<div class="max-w-6xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <aside class="lg:col-span-1 space-y-4">
+        <div class="bg-white p-4 rounded shadow">
+            <h3 class="font-bold mb-3">📊 学习进度</h3>
+            <div class="space-y-2 text-sm">
+                <div>整体：<span id="totalText">0/144天</span></div>
+                <div class="h-2 bg-gray-200 rounded"><div id="totalBar" class="h-2 bg-primary rounded" style="width:0"></div></div>
+                <div>会计：<span id="accText">0%</span></div>
+                <div class="h-2 bg-gray-200 rounded"><div id="accBar" class="h-2 bg-accounting rounded" style="width:0"></div></div>
+                <div>税法：<span id="taxText">0%</span></div>
+                <div class="h-2 bg-gray-200 rounded"><div id="taxBar" class="h-2 bg-tax rounded" style="width:0"></div></div>
+                <div>经济法：<span id="ecoText">0%</span></div>
+                <div class="h-2 bg-gray-200 rounded"><div id="ecoBar" class="h-2 bg-economic rounded" style="width:0"></div></div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+            <h3 class="font-bold mb-3">🕒 你的时间规划</h3>
+            <p class="text-xs text-gray-600 leading-relaxed">
+                早通勤：经济法音频<br>
+                晚通勤：经济法背诵<br>
+                晚间19:30-22:30：会计+税法<br>
+                周末：全天系统学习
+            </p>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+            <button onclick="expandAll()" class="w-full p-2 bg-primary text-white rounded mb-2">展开全部</button>
+            <button onclick="collapseAll()" class="w-full p-2 bg-gray-200 rounded">收起全部</button>
+        </div>
+    </aside>
+
+    <main class="lg:col-span-3 space-y-4">
+        <div class="bg-white p-4 rounded shadow border-l-4 border-primary">
+            <h2 class="font-bold flex items-center gap-2">
+                <i class="fa fa-calendar-check-o text-primary"></i>今日学习任务
+                <span id="todayDate" class="text-xs bg-primary text-white px-2 rounded"></span>
+            </h2>
+            <div id="todayTasks" class="mt-3 space-y-2"></div>
+        </div>
+
+        <div class="bg-white p-4 rounded shadow">
+            <h2 class="font-bold mb-4">📚 完整144天专属学习计划</h2>
+            <div id="allTasks" class="space-y-3"></div>
+        </div>
+    </main>
+</div>
+
+<script>
+// CPA精准章节库
+const cpa = {
+    accounting: ["总论","存货","固定资产","无形资产","长期股权投资","收入","所得税","合并报表"],
+    tax: ["增值税","消费税","企业所得税","个人所得税","小税种"],
+    economic: ["民事法律","物权法律","合同法律","公司法律","证券法律"]
+};
+
+// 生成【适配你作息】的144天计划
+function generatePlan() {
+    const start = new Date(2026,3,7);
+    const plan = [];
+    let day = 1;
+    for(let i=0;i<144;i++){
+        const d = new Date(start);
+        d.setDate(start.getDate()+i);
+        const isWorkDay = d.getDay()>=1 && d.getDay()<=5;
+        let phase,color;
+        
+        if(day<=60){ phase="基础阶段"; color="primary"; }
+        else if(day<=100){ phase="强化阶段"; color="accounting"; }
+        else if(day<=125){ phase="模考阶段"; color="tax"; }
+        else{ phase="冲刺阶段"; color="economic"; }
+
+        let tasks = [];
+        if(isWorkDay){
+            // 工作日：通勤+晚间 严格按你的时间
+            tasks = [
+                {type:"economic", time:"早通勤(1h20m)", content:`经济法音频：${cpa.economic[day%5]}`},
+                {type:"economic", time:"晚通勤(1h20m)", content:`经济法背诵：${cpa.economic[day%5]}`},
+                {type:"accounting", time:"晚间1.5h", content:`会计学习：${cpa.accounting[day%8]}`},
+                {type:"tax", time:"晚间1.5h", content:`税法学习：${cpa.tax[day%5]}`},
+            ];
+        }else{
+            // 周末：全天系统学习
+            tasks = [
+                {type:"all", time:"全天(8h)", content:"会计+税法+经济法 系统复习+刷题"}
+            ];
+        }
+
+        plan.push({day,date:d,phase,color,tasks,isWorkDay});
+        day++;
+    }
+    return plan;
+}
+
+const studyPlan = generatePlan();
+let taskStates = JSON.parse(localStorage.getItem('cpa_my_plan')) || {};
+
+// 格式化日期
+function fmt(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,0)}-${String(d.getDate()).padStart(2,0)}`;}
+
+// 渲染今日任务
+function renderToday(){
+    const today = new Date().toDateString();
+    const item = studyPlan.find(x=>x.date.toDateString()===today);
+    const el = document.getElementById('todayTasks');
+    const dateEl = document.getElementById('todayDate');
+    if(!item){ el.innerHTML='<p class="text-gray-500">今日无计划</p>'; return; }
+    dateEl.textContent = `第${item.day}天 | ${fmt(item.date)}`;
+    el.innerHTML = item.tasks.map((t,idx)=>{
+        const id = `t_${item.day}_${idx}`;
+        const cls = t.time.includes('通勤')?'commute':'night';
+        return `
+        <div class="p-2 rounded ${cls} flex items-center">
+            <input type="checkbox" ${taskStates[id]?'checked':''} onchange="toggle('${id}')" class="mr-2">
+            <span class="${taskStates[id]?'task-complete':''}">${t.time} | ${t.content}</span>
+        </div>`;
+    }).join('');
+}
+
+// 渲染全部计划
+function renderAll(){
+    const el = document.getElementById('allTasks');
+    el.innerHTML = '';
+    let lastPhase = '';
+    studyPlan.forEach(item=>{
+        if(item.phase!==lastPhase){
+            lastPhase=item.phase;
+            el.innerHTML += `<div class="p-2 bg-${item.color}/10 font-bold text-${item.color} rounded">📖 ${item.phase}</div>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'border rounded overflow-hidden';
+        card.innerHTML = `
+        <div class="p-2 flex justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+            <span>第${item.day}天 | ${fmt(item.date)} ${item.isWorkDay?'工作日':'周末'}</span>
+            <span class="text-${item.color}">${item.phase}</span>
+        </div>
+        <div class="hidden p-2 border-t space-y-1">
+            ${item.tasks.map((t,idx)=>{
+                const id = `t_${item.day}_${idx}`;
+                const cls = t.time.includes('通勤')?'commute':'night';
+                return `
+                <div class="p-1 rounded ${cls} flex items-center">
+                    <input type="checkbox" ${taskStates[id]?'checked':''} onchange="toggle('${id}')" class="mr-2">
+                    <span class="${taskStates[id]?'task-complete':''}">${t.time} | ${t.content}</span>
+                </div>`;
+            }).join('')}
+        </div>`;
+        el.appendChild(card);
+    });
+}
+
+// 核心功能
+function toggle(id){ taskStates[id]=!taskStates[id]; save(); update(); renderToday(); renderAll(); }
+function save(){ localStorage.setItem('cpa_my_plan',JSON.stringify(taskStates)); }
+function update(){
+    let total=0,complete=0,a=0,ac=0,t=0,tc=0,e=0,ec=0;
+    studyPlan.forEach(p=>{
+        p.tasks.forEach((task,i)=>{
+            const c = taskStates[`t_${p.day}_${i}`];
+            total++; if(c) complete++;
+            if(task.type==='accounting'){a++;if(c)ac++;}
+            if(task.type==='tax'){t++;if(c)tc++;}
+            if(task.type==='economic'){e++;if(c)ec++;}
+        });
+    });
+    const tp = Math.round(complete/total*100);
+    document.getElementById('totalProgress').textContent=tp+'%';
+    document.getElementById('totalText').textContent=`${complete}/${total}天`;
+    document.getElementById('totalBar').style.width=tp+'%';
+    document.getElementById('accText').textContent=a?Math.round(ac/a*100)+'%':'0%';
+    document.getElementById('accBar').style.width=a?Math.round(ac/a*100)+'%':'0%';
+    document.getElementById('taxText').textContent=t?Math.round(tc/t*100)+'%':'0%';
+    document.getElementById('taxBar').style.width=t?Math.round(tc/t*100)+'%':'0%';
+    document.getElementById('ecoText').textContent=e?Math.round(ec/e*100)+'%':'0%';
+    document.getElementById('ecoBar').style.width=e?Math.round(ec/e*100)+'%':'0%';
+}
+
+function expandAll(){document.querySelectorAll('.hidden').forEach(x=>x.classList.remove('hidden'));}
+function collapseAll(){document.querySelectorAll('[class*="hidden"]').forEach(x=>x.classList.add('hidden'));}
+document.getElementById('resetBtn').onclick=()=>{if(confirm('确定重置？')){taskStates={};save();update();renderToday();renderAll();}};
+
+// 初始化
+window.onload=()=>{renderToday();renderAll();update();};
+</script>
+</body>
+</html>
